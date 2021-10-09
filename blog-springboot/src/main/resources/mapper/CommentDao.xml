@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.minzheng.blog.dao.CommentDao">
+
+
+    <select id="listComments" resultType="com.minzheng.blog.dto.CommentDTO">
+        SELECT
+        u.nickname,
+        u.avatar,
+        u.web_site,
+        c.user_id,
+        c.id,
+        c.comment_content,
+        c.create_time
+        FROM
+        tb_comment c
+        JOIN tb_user_info u ON c.user_id = u.id
+        WHERE
+        <if test="articleId != null">
+            article_id = #{articleId}
+        </if>
+        <if test="articleId == null">
+            article_id is NULL
+        </if>
+        AND c.is_delete = 0
+        AND parent_id IS NULL
+        ORDER BY
+        create_time DESC
+        LIMIT #{current},10
+    </select>
+
+    <select id="listReplies" resultType="com.minzheng.blog.dto.ReplyDTO">
+        SELECT
+        *
+        FROM
+        (
+        SELECT
+        c.user_id,
+        u.nickname,
+        u.avatar,
+        u.web_site,
+        c.reply_id,
+        r.nickname AS reply_nickname,
+        r.web_site AS reply_web_site,
+        c.id,
+        c.parent_id,
+        c.comment_content,
+        c.create_time,
+        row_number () over ( PARTITION BY parent_id ORDER BY create_time ASC ) row_num
+        FROM
+        tb_comment c
+        JOIN tb_user_info u ON c.user_id = u.id
+        JOIN tb_user_info r ON c.reply_id = r.id
+        WHERE
+        c.is_delete = 0
+        AND
+        parent_id IN
+        (
+        <foreach collection="commentIdList" item="commentId" separator=",">
+            #{commentId}
+        </foreach>
+        )
+        ) t
+        WHERE
+        4 > row_num
+    </select>
+
+    <select id="listReplyCountByCommentId" resultType="com.minzheng.blog.dto.ReplyCountDTO">
+        SELECT
+        parent_id as comment_id,
+        count(1) AS reply_count
+        FROM
+        tb_comment
+        WHERE
+        is_delete = 0
+        AND
+        parent_id IN
+        (
+        <foreach collection="commentIdList" item="commentId" separator=",">
+            #{commentId}
+        </foreach>
+        )
+        GROUP BY
+        parent_id
+    </select>
+
+    <select id="listRepliesByCommentId" resultType="com.minzheng.blog.dto.ReplyDTO">
+        SELECT
+        c.user_id,
+        u.nickname,
+        u.avatar,
+        u.web_site,
+        c.reply_id,
+        r.nickname as reply_nickname,
+        r.web_site as reply_web_site,
+        c.id,
+        c.parent_id,
+        c.comment_content,
+        c.create_time
+        FROM
+        tb_comment c
+        JOIN tb_user_info u ON c.user_id = u.id
+        JOIN tb_user_info r ON c.reply_id = r.id
+        WHERE
+        c.is_delete = 0
+        AND
+        parent_id =#{commentId}
+        ORDER BY create_time ASC
+        LIMIT #{current},5
+    </select>
+
+    <select id="listCommentBackDTO" resultType="com.minzheng.blog.dto.CommentBackDTO">
+        SELECT
+        c.id,
+        u.avatar,
+        u.nickname,
+        r.nickname AS reply_nickname,
+        a.article_title,
+        c.comment_content,
+        c.create_time,
+        c.is_delete
+        FROM
+        tb_comment c
+        LEFT JOIN tb_article a ON c.article_id = a.id
+        LEFT JOIN tb_user_info u ON c.user_id = u.id
+        LEFT JOIN tb_user_info r ON c.reply_id = r.id
+        <where>
+            c.is_delete = #{condition.isDelete}
+            <if test="condition.keywords != null">
+                and u.nickname like concat('%',#{condition.keywords},'%')
+            </if>
+        </where>
+        ORDER BY
+        create_time DESC
+        LIMIT #{condition.current},#{condition.size}
+    </select>
+
+    <select id="countCommentDTO" resultType="java.lang.Integer">
+        SELECT
+        count(1)
+        from
+        tb_comment c
+        LEFT JOIN tb_user_info u ON c.user_id = u.id
+        <where>
+            c.is_delete = #{condition.isDelete}
+            <if test="condition.keywords != null">
+                and u.nickname like concat('%',#{condition.keywords},'%')
+            </if>
+        </where>
+    </select>
+
+
+</mapper>

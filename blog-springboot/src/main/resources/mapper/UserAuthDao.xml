@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.minzheng.blog.dao.UserAuthDao">
+
+    <resultMap id="UserBackMap" type="com.minzheng.blog.dto.UserBackDTO">
+        <id column="id" property="id"/>
+        <result column="user_info_id" property="userInfoId"/>
+        <result column="avatar" property="avatar"/>
+        <result column="nickname" property="nickname"/>
+        <result column="login_type" property="loginType"/>
+        <result column="ip_addr" property="ipAddr"/>
+        <result column="ip_source" property="ipSource"/>
+        <result column="create_time" property="createTime"/>
+        <result column="last_login_time" property="lastLoginTime"/>
+        <result column="is_disable" property="isDisable"/>
+        <collection property="roleList" ofType="com.minzheng.blog.dto.UserRoleDTO">
+            <id column="role_id" property="id"/>
+            <id column="role_name" property="roleName"/>
+        </collection>
+    </resultMap>
+
+    <select id="listUsers" resultMap="UserBackMap">
+        SELECT
+        ua.id,
+        user_info_id,
+        avatar,
+        nickname,
+        login_type,
+        r.id as role_id,
+        role_name,
+        ip_addr,
+        ip_source,
+        ua.create_time,
+        last_login_time,
+        ui.is_disable
+        FROM
+        tb_user_auth ua
+        LEFT JOIN tb_user_info ui ON ua.user_info_id = ui.id
+        LEFT JOIN tb_user_role ur ON ui.id = ur.user_id
+        LEFT JOIN tb_role r ON ur.role_id = r.id
+        <where>
+            <if test="condition.keywords != null">
+                 nickname like concat('%',#{condition.keywords},'%')
+            </if>
+        </where>
+        LIMIT #{condition.current},#{condition.size}
+    </select>
+
+    <select id="countUser" resultType="java.lang.Integer">
+        SELECT
+        count( 1 )
+        FROM
+        tb_user_auth ua
+        LEFT JOIN tb_user_info ui ON ua.user_info_id = ui.id
+        <where>
+            <if test="condition.keywords != null">
+                 nickname like concat('%',#{condition.keywords},'%')
+            </if>
+        </where>
+    </select>
+
+</mapper>

@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.minzheng.blog.dao.ArticleDao">
+
+    <resultMap id="articleHomeResultMap" type="com.minzheng.blog.dto.ArticleHomeDTO">
+        <id column="id" property="id"/>
+        <result column="article_cover" property="articleCover"/>
+        <result column="article_title" property="articleTitle"/>
+        <result column="article_content" property="articleContent"/>
+        <result column="create_time" property="createTime"/>
+        <result column="is_top" property="isTop"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="category_name" property="categoryName"/>
+        <collection property="tagDTOList" ofType="com.minzheng.blog.dto.TagDTO">
+            <id column="tag_id" property="id"/>
+            <result column="tag_name" property="tagName"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="articlePreviewResultMap" type="com.minzheng.blog.dto.ArticlePreviewDTO">
+        <id column="id" property="id"/>
+        <result column="article_cover" property="articleCover"/>
+        <result column="article_title" property="articleTitle"/>
+        <result column="create_time" property="createTime"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="category_name" property="categoryName"/>
+        <collection property="tagDTOList" ofType="com.minzheng.blog.dto.TagDTO">
+            <id column="tag_id" property="id"/>
+            <result column="tag_name" property="tagName"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="articleResultMap" type="com.minzheng.blog.dto.ArticleDTO">
+        <id column="id" property="id"/>
+        <result column="article_cover" property="articleCover"/>
+        <result column="article_title" property="articleTitle"/>
+        <result column="article_content" property="articleContent"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="category_id" property="categoryId"/>
+        <result column="category_name" property="categoryName"/>
+        <collection property="tagDTOList" ofType="com.minzheng.blog.dto.TagDTO">
+            <id column="tag_id" property="id"/>
+            <result column="tag_name" property="tagName"/>
+        </collection>
+    </resultMap>
+
+    <resultMap id="articleBackResultMap" type="com.minzheng.blog.dto.ArticleBackDTO">
+        <id column="id" property="id"/>
+        <result column="article_title" property="articleTitle"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="is_top" property="isTop"/>
+        <result column="is_draft" property="isDraft"/>
+        <result column="is_delete" property="isDelete"/>
+        <result column="category_name" property="categoryName"/>
+        <collection property="tagDTOList" ofType="com.minzheng.blog.dto.TagDTO">
+            <id column="tag_id" property="id"/>
+            <result column="tag_name" property="tagName"/>
+        </collection>
+    </resultMap>
+
+    <select id="listArticles" resultMap="articleHomeResultMap">
+     SELECT
+	 a.id,
+	 article_cover,
+	 article_title,
+	 article_content,
+	 a.create_time,
+	 a.is_top,
+	 a.category_id,
+	 category_name,
+	 t.id AS tag_id,
+	 t.tag_name
+     FROM
+	 (
+	 SELECT
+		id,
+		article_cover,
+		article_title,
+		article_content,
+		is_top,
+		create_time,
+		category_id
+	    FROM
+ 		tb_article
+ 		WHERE is_delete = 0
+ 		and is_draft = 0
+		ORDER BY is_top DESC,id DESC
+		LIMIT #{current} , 10
+	 ) a
+	 JOIN tb_category c ON a.category_id = c.id
+	 JOIN tb_article_tag atg ON a.id = atg.article_id
+	 JOIN tb_tag t ON t.id = atg.tag_id
+	 ORDER BY a.is_top DESC,a.id DESC
+    </select>
+
+    <select id="listArticlesByCondition" resultMap="articlePreviewResultMap">
+        SELECT
+        a.id,
+        article_cover,
+        article_title,
+        a.create_time,
+        a.category_id,
+        category_name,
+        t.id AS tag_id,
+        t.tag_name
+        FROM
+        (
+        SELECT
+        id,
+        article_cover,
+        article_title,
+        article_content,
+        create_time,
+        category_id
+        FROM
+        tb_article
+        <where>
+            <if test="condition.categoryId != null">
+                category_id =#{condition.categoryId}
+            </if>
+            <if test="condition.tagId != null">
+                id IN (
+                SELECT
+                article_id
+                FROM
+                tb_article_tag
+                WHERE
+                tag_id = #{condition.tagId})
+            </if>
+        </where>
+        AND is_delete = 0
+        AND is_draft = 0
+        ORDER BY id DESC
+        LIMIT #{condition.current} , 9
+        ) a
+        JOIN tb_category c ON a.category_id = c.id
+        JOIN tb_article_tag atg ON a.id = atg.article_id
+        JOIN tb_tag t ON t.id = atg.tag_id
+    </select>
+
+    <select id="getArticleById" resultMap="articleResultMap">
+	 SELECT
+	 a.id,
+	 article_cover,
+	 article_title,
+	 article_content,
+	 a.create_time,
+	 a.update_time,
+	 a.category_id,
+	 category_name,
+	 t.id AS tag_id,
+	 t.tag_name
+     FROM
+	 tb_article a
+	 JOIN tb_category c ON a.category_id = c.id
+	 JOIN tb_article_tag atg ON a.id = atg.article_id
+	 JOIN tb_tag t ON t.id = atg.tag_id
+     WHERE
+	 a.id = #{articleId}
+	</select>
+
+    <select id="listArticleBacks" resultMap="articleBackResultMap">
+        SELECT
+        a.id,
+        article_title,
+        is_top,
+        is_draft,
+        a.is_delete,
+        a.create_time,
+        a.update_time,
+        category_name,
+        t.id AS tag_id,
+        t.tag_name
+        FROM
+        (
+        SELECT
+        id,
+        article_title,
+        is_top,
+        is_draft,
+        is_delete,
+        create_time,
+        update_time,
+        category_id
+        FROM
+        tb_article
+        <where>
+            is_delete = #{condition.isDelete}
+            <if test="condition.isDraft != null">
+                and is_draft = #{condition.isDraft}
+            </if>
+            <if test="condition.keywords != null">
+                and article_title like concat('%',#{condition.keywords},'%')
+            </if>
+        </where>
+        ORDER BY is_top DESC, id DESC
+        LIMIT #{condition.current},#{condition.size}
+        ) a
+        LEFT JOIN tb_category c ON a.category_id = c.id
+        LEFT JOIN tb_article_tag atg ON a.id = atg.article_id
+        LEFT JOIN tb_tag t ON t.id = atg.tag_id
+        ORDER BY is_top DESC, a.id DESC
+    </select>
+
+    <select id="countArticleBacks" resultType="java.lang.Integer">
+        SELECT
+        count(1)
+        from
+        tb_article
+        <where>
+            is_delete = #{condition.isDelete}
+            <if test="condition.isDraft != null">
+                and is_draft = #{condition.isDraft}
+            </if>
+            <if test="condition.keywords != null">
+                and article_title like concat('%',#{condition.keywords},'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="listArticleRank" resultType="com.minzheng.blog.entity.Article">
+        SELECT
+        id,
+        article_title
+        FROM
+        tb_article
+        WHERE
+        id IN
+        <foreach collection="articleIdList" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        ORDER BY field
+        <foreach collection="articleIdList" item="item" open="(id," separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
+    <select id="listArticleRecommends" resultType="com.minzheng.blog.dto.ArticleRecommendDTO">
+        SELECT
+            id,
+            article_title,
+            article_cover,
+            create_time
+        FROM
+            (
+              SELECT DISTINCT
+                article_id
+                FROM
+                 ( SELECT tag_id FROM tb_article_tag WHERE article_id = #{articleId} ) t
+                 JOIN tb_article_tag t1 ON t.tag_id = t1.tag_id
+                 WHERE
+                 article_id != #{articleId}
+            ) t2
+               JOIN tb_article a ON t2.article_id = a.id
+        WHERE  a.is_delete = 0
+        ORDER BY
+            is_top DESC,id DESC
+            LIMIT 6
+    </select>
+
+</mapper>

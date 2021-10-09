@@ -1,0 +1,91 @@
+#配置端口
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 21600
+
+#配置mysql数据库
+spring:
+  datasource:
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://你的ip:3306/blog?serverTimezone=GMT%2B8&allowMultiQueries=true
+    username: 数据库账号
+    password: 数据库密码
+    hikari:
+      minimum-idle: 5
+      # 空闲连接存活最大时间，默认600000（10分钟）
+      idle-timeout: 180000
+      # 连接池最大连接数，默认是10
+      maximum-pool-size: 10
+      # 此属性控制从池返回的连接的默认自动提交行为,默认值：true
+      auto-commit: true
+      # 连接池名称
+      pool-name: MyHikariCP
+      # 此属性控制池中连接的最长生命周期，值0表示无限生命周期，默认1800000即30分钟
+      max-lifetime: 1800000
+      # 数据库连接超时时间,默认30秒，即30000
+      connection-timeout: 30000
+      connection-test-query: SELECT 1
+  #redis配置
+  redis:
+    host: 你的密码
+    port: 6379
+    password: Redis密码
+  #mq配置
+  rabbitmq:
+    host: 服务器ip
+    port: 5672
+    username: MQ账号
+    password: MQ密码
+  #邮箱配置
+  mail:
+    host: smtp.qq.com
+    username: 邮箱号
+    password: 邮箱授权码
+    default-encoding: UTF-8
+    port: 587
+    properties:
+      mail:
+      smtp:
+      auth: true
+      socketFactory:
+      class: javax.net.ssl.SSLSocketFactory
+  #图片大小限制
+  servlet:
+    multipart:
+      max-file-size: 40MB
+      max-request-size: 100MB
+
+#es配置
+elasticsearch:
+  host: 你的ip
+  port: 9200
+
+#配置MybatisPlus
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    map-underscore-to-camel-case: true
+
+#第三方配置信息
+qq:
+  app-id: "QQ APPID"
+  user-info-url: "https://graph.qq.com/user/get_user_info?openid={openid}&access_token={access_token}&oauth_consumer_key={oauth_consumer_key}"
+
+weibo:
+  app-id: "微博APPID"
+  app-secret: "微博APP密钥"
+  grant-type: "authorization_code"
+  redirect-url: "微博回调域名"
+  access-token-url: "https://api.weibo.com/oauth2/access_token"
+  user-info-url: "https://api.weibo.com/2/users/show.json?uid={uid}&access_token={access_token}"
+
+aliyun:
+  url: "OSS域名"
+  endpoint: "http://oss-cn-hangzhou.aliyuncs.com"
+  accessKeyId: "阿里云accessKeyId"
+  accessKeySecret: "阿里云accessKeySecret"
+  bucketName: "阿里云bucket名"
